@@ -1,0 +1,11 @@
+flask
+flask-pymongo
+python-dotenv
+pymongo
+mongomock
+pytest
+gunicorn
+flask_cors
+requests
+jose
+python-jose

@@ -1,0 +1,49 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Flask / SQLite database
+instance/
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+*.pid
+*.seed
+*.bak
+.dockerignore
+
+# System files
+.DS_Store
+Thumbs.db
+.env
