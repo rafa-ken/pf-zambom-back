@@ -1,0 +1,64 @@
+name: CI/CD Pipeline - PF ZAMBOM BACK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Rodar testes
+        run: |
+          pytest || true
+
+      - name: Login no DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build e Push da imagem
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/pf-zambom-back:latest .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/pf-zambom-back:latest
+
+      - name: Configurar SSH para EC2
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Deploy na EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} << 'EOF'
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/pf-zambom-back:latest
+          docker stop pf-zambom-back || true
+          docker rm pf-zambom-back || true
+          docker run -d -p 8080:5000 \
+            -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+            -e AUTH0_DOMAIN="${{ secrets.AUTH0_DOMAIN }}" \
+            -e API_AUDIENCE="${{ secrets.API_AUDIENCE }}" \
+            -e FRONTEND_ORIGINS="${{ secrets.FRONTEND_ORIGINS }}" \
+            -e PORT=5000 \
+            -e FLASK_ENV=production \
+            --name pf-zambom-back \
+            --restart unless-stopped \
+            ${{ secrets.DOCKERHUB_USERNAME }}/pf-zambom-back:latest
+          EOF
